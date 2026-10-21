@@ -145,6 +145,7 @@ fn dispatch(ctx: Ctx, command: []const u8) u8 {
     if (eql(command, "codex-hook")) return cmdCodexHook(ctx);
     if (eql(command, "pi-hook")) return cmdPiHook(ctx);
     if (eql(command, "opencode-hook")) return cmdAgentHook(ctx, opencode_agent);
+    if (eql(command, "omp-hook")) return cmdAgentHook(ctx, omp_agent);
     if (eql(command, "opencode-config")) return cmdOpencodeConfig(ctx);
     if (eql(command, "antigravity-config")) return cmdAntigravityConfig(ctx);
     if (eql(command, "antigravity-hook")) return cmdAntigravityHook(ctx);
@@ -1254,6 +1255,20 @@ const antigravity_agent = AgentConfig{
     .session_dir_env = null,
 };
 
+const omp_agent = AgentConfig{
+    .name = "omp",
+    .display_name = "oh-my-pi",
+    .usage = "usage: omp-hook <session-start|session-end|prompt-submit|pre-tool-use|post-tool-use|notification|stop|state>\n",
+    .pid_env = "SEANCE_OMP_PID",
+    .response = "OK\n",
+    .status_key_prefix = "omp",
+    .status_key_mode = .surface,
+    .has_ask_user_handling = false,
+    .has_notification_hook = true,
+    .has_post_tool_hook = true,
+    .session_dir_env = null,
+};
+
 fn cmdAntigravityConfig(ctx: Ctx) u8 {
     if (ctx.rest.len != 1) return 1;
     @import("antigravity.zig").install(ctx.alloc, ctx.rest[0]) catch |err| {
@@ -1418,7 +1433,7 @@ fn cmdAgentHook(ctx: Ctx, agent: AgentConfig) u8 {
         if (agent.has_notification_hook) return agentHookNotification(h);
     }
     if (eql(hook_cmd, "stop")) return agentHookStop(h);
-    if (eql(agent.name, "OpenCode") and eql(hook_cmd, "state")) return agentHookOpenCodeState(h);
+    if ((eql(agent.name, "OpenCode") or eql(agent.name, "omp")) and eql(hook_cmd, "state")) return agentHookOpenCodeState(h);
 
     wfmt("seance: unknown hook '{s}'\n", .{hook_cmd});
     return 1;
@@ -2224,6 +2239,11 @@ fn printUsage() void {
         \\Antigravity CLI Hooks:
         \\  antigravity-hook <state|session-end>  Track Antigravity CLI status
         \\  antigravity-config <settings.json>   Install its status callback
+        \\
+        \\oh-my-pi Hooks:
+        \\  omp-hook <event>        Handle an oh-my-pi lifecycle event from the bundled extension
+        \\    Events: session-start, session-end, prompt-submit, pre-tool-use,
+        \\            post-tool-use, notification, stop, state
         \\
     );
 }
