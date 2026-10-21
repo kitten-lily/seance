@@ -1679,10 +1679,10 @@ fn toolDescription(alloc: Allocator, tool_name: ?[]const u8, data: JsonValue) []
 
     const ti_obj = if (tool_input == .object) tool_input.object else null;
 
-    if (eql(tn, "Read")) return tiFileDesc(alloc, ti_obj, "Reading");
-    if (eql(tn, "Edit")) return tiFileDesc(alloc, ti_obj, "Editing");
-    if (eql(tn, "Write")) return tiFileDesc(alloc, ti_obj, "Writing");
-    if (eql(tn, "Bash")) {
+    if (eql(tn, "Read") or eql(tn, "read")) return tiFileDesc(alloc, ti_obj, "Reading");
+    if (eql(tn, "Edit") or eql(tn, "edit")) return tiFileDesc(alloc, ti_obj, "Editing");
+    if (eql(tn, "Write") or eql(tn, "write")) return tiFileDesc(alloc, ti_obj, "Writing");
+    if (eql(tn, "Bash") or eql(tn, "bash")) {
         if (ti_obj) |obj| {
             if (obj.get("command")) |cmd| {
                 if (cmd == .string) {
@@ -1693,9 +1693,9 @@ fn toolDescription(alloc: Allocator, tool_name: ?[]const u8, data: JsonValue) []
         }
         return "Running command";
     }
-    if (eql(tn, "Glob")) return tiPatternDesc(alloc, ti_obj, "Searching");
-    if (eql(tn, "Grep")) return tiPatternDesc(alloc, ti_obj, "Searching");
-    if (eql(tn, "Agent")) {
+    if (eql(tn, "Glob") or eql(tn, "glob")) return tiPatternDesc(alloc, ti_obj, "Searching");
+    if (eql(tn, "Grep") or eql(tn, "grep")) return tiPatternDesc(alloc, ti_obj, "Searching");
+    if (eql(tn, "Agent") or eql(tn, "task")) {
         if (ti_obj) |obj| {
             if (obj.get("description")) |d| {
                 if (d == .string) {
@@ -1706,13 +1706,13 @@ fn toolDescription(alloc: Allocator, tool_name: ?[]const u8, data: JsonValue) []
         return "Agent";
     }
     if (eql(tn, "WebFetch")) return "Fetching URL";
-    if (eql(tn, "WebSearch")) return tiQueryDesc(alloc, ti_obj, "Searching web");
+    if (eql(tn, "WebSearch") or eql(tn, "web_search")) return tiQueryDesc(alloc, ti_obj, "Searching web");
     return tn;
 }
 
 fn tiFileDesc(alloc: Allocator, obj: ?std.json.ObjectMap, verb: []const u8) []const u8 {
     if (obj) |o| {
-        if (o.get("file_path")) |fp| {
+        if (o.get("file_path") orelse o.get("path")) |fp| {
             if (fp == .string) return std.fmt.allocPrint(alloc, "{s} {s}", .{ verb, std.fs.path.basename(fp.string) }) catch verb;
         }
     }
